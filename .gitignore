@@ -1,0 +1,7 @@
+**/.terraform/
+**/__pycache__
+
+venv
+.venv
+
+.env
