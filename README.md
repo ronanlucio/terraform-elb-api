@@ -1,5 +1,13 @@
 # terraform-elb-api
 
+## Overview
+
+- App source files are stored on **app** folder
+- Terraform files are stored on **terraform** folder
+- Ansible files are stored on **ansible** folder
+- Terraform provisions the underlying infrastructure
+- Ansible builds App's docker image, pushes it to AWS ECR, and deploy it to EC2 instance
+
 ## Requirements
 
 ### AWS Account
@@ -36,6 +44,7 @@ NOTES:
 
 ### Softwares
 
+- AWS CLI >= 2.4.1
 - Terraform >= 1.1.2
 - Ansible >= 2.11.7
 - Docker >= 20.10.12
@@ -58,6 +67,7 @@ export APP_AWS_REGION=
 So you can build the container image
 
 ```
+cd app
 docker build --no-cache -t elb-api:0.0.1 --build-arg APP_AWS_ACCESS_KEY_ID --build-arg APP_AWS_SECRET_ACCESS_KEY --build-arg APP_AWS_REGION .
 ```
 
@@ -65,4 +75,23 @@ docker build --no-cache -t elb-api:0.0.1 --build-arg APP_AWS_ACCESS_KEY_ID --bui
 
 ```
 docker run --rm -p "80:88080" elb-api:0.0.1
+```
+
+## Ansible
+
+```
+export INSTANCE_IP="54.89.189.38"
+export ECR_REPOSITORY="993359121485.dkr.ecr.us-east-1.amazonaws.com/elb_api"
+export APP_VERSION="0.0.2"
+export APP_AWS_REGION="us-east-1"
+
+ansible-playbook build-elb-api.yaml \
+    -e 'ansible_connection=local ansible_python_interpreter="/usr/bin/env python3"'     
+    --extra-vars "aws_region=${APP_AWS_REGION} ecr_repository_url=${ECR_REPOSITORY} app_version=${APP_VERSION}" \
+    -i localhost,
+
+ansible-playbook deploy-elb-api.yaml \
+    -e "ansible_user=ubuntu" \
+    --extra-vars "aws_region=${APP_AWS_REGION} ecr_repository_url=${ECR_REPOSITORY} app_version=${APP_VERSION}" \
+    -i ${INSTANCE_IP},
 ```

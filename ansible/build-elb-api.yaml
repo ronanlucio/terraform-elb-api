@@ -1,0 +1,62 @@
+---
+- name: Build and push elb-api
+  hosts: localhost
+  connection: local
+  become: yes
+
+  vars:
+    aws_access_key_id: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+    aws_secret_access_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
+    app_aws_access_key_id: "{{ lookup('env', 'TF_VAR_APP_AWS_ACCESS_KEY_ID') }}"
+    app_aws_secret_access_key: "{{ lookup('env', 'TF_VAR_APP_AWS_SECRET_ACCESS_KEY') }}"
+
+  tasks:
+    # Debub environment variables
+    - debug:
+        msg:
+          - "aws_region is {{ aws_region }}"
+          - "ecr_repository_url is {{ ecr_repository_url }}"
+          - "app_version is {{ app_version }}"
+
+    # Authenticate to ECR
+    - name: Authenticate to ECR
+      shell: "aws ecr get-login-password --region {{ aws_region }} | docker login --username AWS --password-stdin {{ ecr_repository_url }}"
+      args:
+        creates: ~/.docker/config.json
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
+
+    # Install docker builder requirements
+    - name: Install aptitude using apt
+      apt: 
+        name: aptitude 
+        state: latest 
+        update_cache: yes 
+        force_apt_get: yes
+
+    - name: Install required system packages
+      apt: 
+        name: "{{ item }}" 
+        state: latest 
+        update_cache: yes
+      loop: [ 'apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common', 'python3-pip', 'python3-setuptools']
+
+    - name: Install Docker Module for Python
+      pip:
+        name: docker
+
+    # Build and push docker image
+    - name: Build and push docker image
+      docker_image:
+        build:
+          path: ../app
+          args:
+            APP_AWS_ACCESS_KEY_ID: "{{ app_aws_access_key_id }}"
+            APP_AWS_SECRET_ACCESS_KEY: "{{ app_aws_secret_access_key }}"
+            APP_AWS_REGION: "{{ aws_region }}"
+        name: "{{ ecr_repository_url }}"
+        tag: "{{ app_version }}"
+        push: yes
+        source: build

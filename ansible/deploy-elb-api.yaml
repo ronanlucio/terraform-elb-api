@@ -1,0 +1,48 @@
+---
+- name: Deploy elb-api
+  hosts: all
+  become: yes
+
+  vars:
+    docker_users: ["ubuntu"]
+    aws_access_key_id: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+    aws_secret_access_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
+    app_aws_access_key_id: "{{ lookup('env', 'TF_VAR_APP_AWS_ACCESS_KEY_ID') }}"
+    app_aws_secret_access_key: "{{ lookup('env', 'TF_VAR_APP_AWS_SECRET_ACCESS_KEY') }}"
+
+  tasks:
+    # Debub environment variables
+    - debug:
+        msg:
+          - "aws_region is {{ aws_region }}"
+          - "ecr_repository_url is {{ ecr_repository_url }}"
+          - "app_version is {{ app_version }}"
+
+    # Install docker
+    - include: install-docker.yaml
+
+    # Install AWS CLI
+    - include: install-aws-cli.yaml
+
+    # Authenticate to ECR
+    - name: Authenticate to ECR
+      shell: "aws ecr get-login-password --region {{ aws_region }} | docker login --username AWS --password-stdin {{ ecr_repository_url }}"
+      args:
+        creates: ~/.docker/config.json
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
+
+    # Deploy docker container
+    - name: Deploy elb-api container
+      docker_container:
+        name: elb-api
+        image: "{{ ecr_repository_url }}:{{ app_version }}"
+        user: webapp:webapp
+        state: started
+        restart_policy: unless-stopped
+        ports:
+          - "80:8080"
+      tags:
+        - deploy
