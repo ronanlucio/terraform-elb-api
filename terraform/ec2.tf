@@ -42,3 +42,53 @@ resource "aws_instance" "elb_api" {
     environment = var.environment
   }
 }
+
+# Locally build a docker image and push it to AWS ECR
+resource "null_resource" "build" {
+  provisioner "local-exec" {
+    working_dir = "../ansible"
+    interpreter = ["/bin/sh", "-c"]
+
+    command = <<-EOT
+      ansible-playbook build-elb-api.yaml \
+      -e 'ansible_connection=local ansible_python_interpreter="/usr/bin/env python3"' \
+      --extra-vars "aws_region=${var.aws_region} ecr_repository_url=${aws_ecr_repository.elb_api.repository_url} app_version=${var.app_version}" \
+      -i localhost,
+
+    EOT
+
+    environment = {
+      AWS_ACCESS_KEY_ID         = "${var.AWS_ACCESS_KEY_ID}"
+      AWS_SECRET_ACCESS_KEY     = "${var.AWS_SECRET_ACCESS_KEY}"
+      APP_AWS_ACCESS_KEY_ID     = "${var.APP_AWS_ACCESS_KEY_ID}"
+      APP_AWS_SECRET_ACCESS_KEY = "${var.APP_AWS_SECRET_ACCESS_KEY}"
+    }
+  }
+
+  depends_on = [aws_ecr_repository.elb_api]
+}
+
+# Deploy docker image to AWS ECR
+resource "null_resource" "deploy" {
+  provisioner "local-exec" {
+    working_dir = "../ansible"
+    interpreter = ["/bin/sh", "-c"]
+
+    command = <<-EOT
+      ansible-playbook deploy-elb-api.yaml \
+      -e "ansible_user=ubuntu" \
+      --private-key "${var.private_key_filepath}" \
+      --extra-vars "aws_region=${var.aws_region} ecr_repository_url=${aws_ecr_repository.elb_api.repository_url} app_version=${var.app_version}" \
+      -i ${aws_instance.elb_api.public_ip},
+    EOT
+
+    environment = {
+      AWS_ACCESS_KEY_ID         = "${var.AWS_ACCESS_KEY_ID}"
+      AWS_SECRET_ACCESS_KEY     = "${var.AWS_SECRET_ACCESS_KEY}"
+      APP_AWS_ACCESS_KEY_ID     = "${var.APP_AWS_ACCESS_KEY_ID}"
+      APP_AWS_SECRET_ACCESS_KEY = "${var.APP_AWS_SECRET_ACCESS_KEY}"
+    }
+  }
+
+  depends_on = [null_resource.build]
+}

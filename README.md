@@ -8,6 +8,27 @@
 - Terraform provisions the underlying infrastructure
 - Ansible builds App's docker image, pushes it to AWS ECR, and deploy it to EC2 instance
 
+### Usage
+
+Executing a **terraform apply** command will (1) create the underlying infrastructure,
+(2) build a docker container with API, push it to AWS ECR, and (3) deploy the container
+image to the provisioned EC2 instance.
+
+```
+$ sudo
+# cd terraform
+# ssh-agent bash
+# ssh-add /path/to/your/private/key
+# terraform plan
+# terraform apply
+```
+
+NOTE:
+
+1. You need to run **terraform apply** with root privileges in order to ansible install local system dependencies
+2. You'll be prompted for the app_version patameter, so you can provide any version value like "1.0.0"
+3. At the end of terraform execution, it will print the load balancer DNS address to be accessed via HTTP.
+
 ## Requirements
 
 ### AWS Account
@@ -28,9 +49,9 @@
 
 Create the following environment variables with its appropriate values:
 
-- AWS_ACCESS_KEY_ID=
-- AWS_SECRET_ACCESS_KEY=
 - TF_VAR_ssh_public_key=
+- TF_VAR_AWS_ACCESS_KEY_ID=
+- TF_VAR_AWS_SECRET_ACCESS_KEY=
 - TF_VAR_APP_AWS_ACCESS_KEY_ID=
 - TF_VAR_APP_AWS_SECRET_ACCESS_KEY=
 - APP_AWS_REGION

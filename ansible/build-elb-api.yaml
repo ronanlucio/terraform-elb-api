@@ -7,8 +7,8 @@
   vars:
     aws_access_key_id: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
     aws_secret_access_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
-    app_aws_access_key_id: "{{ lookup('env', 'TF_VAR_APP_AWS_ACCESS_KEY_ID') }}"
-    app_aws_secret_access_key: "{{ lookup('env', 'TF_VAR_APP_AWS_SECRET_ACCESS_KEY') }}"
+    app_aws_access_key_id: "{{ lookup('env', 'APP_AWS_ACCESS_KEY_ID') }}"
+    app_aws_secret_access_key: "{{ lookup('env', 'APP_AWS_SECRET_ACCESS_KEY') }}"
 
   tasks:
     # Debub environment variables
