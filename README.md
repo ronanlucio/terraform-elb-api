@@ -10,7 +10,7 @@
 
 ### Usage
 
-Executing a **terraform apply** command will (1) create the underlying infrastructure,
+Executing a **terraform apply** command (1) creates the underlying infrastructure,
 (2) build a docker container with API, push it to AWS ECR, and (3) deploy the container
 image to the provisioned EC2 instance.
 
@@ -23,10 +23,10 @@ $ sudo
 # terraform apply
 ```
 
-NOTE:
+NOTES:
 
 1. You need to run **terraform apply** with root privileges in order to ansible install local system dependencies
-2. You'll be prompted for the app_version patameter, so you can provide any version value like "1.0.0"
+2. You'll be prompted for the app_version parameter, so you can provide any version value like "1.0.0"
 3. At the end of terraform execution, it will print the load balancer DNS address to be accessed via HTTP.
 
 ## Requirements
@@ -58,8 +58,8 @@ Create the following environment variables with its appropriate values:
 
 NOTES: 
 
-1. AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY refers to AWS Account to be used by Terraform
-2. TF_VAR_APP_AWS_ACCESS_KEY_ID and TF_VAR_APP_AWS_SECRET_ACCESS_KEY refers to AWS Account to be used by the API
+1. AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY refers to AWS Account to be used by Terraform to provision the underlying infrastructure
+2. TF_VAR_APP_AWS_ACCESS_KEY_ID and TF_VAR_APP_AWS_SECRET_ACCESS_KEY refers to AWS Account to be used by the API to list, attach, and detach instances to/from ALB
 3. TF_VAR_ssh_public_key refers to the SSH public key to be a key pair in order to access the instance via SSH. 
 4. Note that it relies on having a local SSH key (private and public).
 
