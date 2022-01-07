@@ -1,10 +1,8 @@
 swagger: '2.0'
 info:
-  description: SRE Test - Loadsmart
+  description: List, Attach, and Detach instances to ALB
   version: 1.0.0
-  title: Site Reliability Engineer Test
-  contact:
-    email: jobs@loadsmart.com
+  title: ELB API
 security:
   - basicAuth: []
 paths:
